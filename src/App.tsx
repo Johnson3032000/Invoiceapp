@@ -6,7 +6,6 @@ import CreateInvoice from './features/invoices/CreateInvoice';
 import AddCustomer from './features/customers/AddCustomer';
 import Customers from './features/customers/Customers';
 import AddressInformation from './features/customers/AddressInformation';
-import FinalBill from './features/Bill/FinalBill';
 
 
 function App() {

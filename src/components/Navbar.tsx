@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Blocks, UserRound, DollarSign } from "lucide-react";
 import { Button } from "@base-ui/react";
 import { useNavigate } from "react-router-dom";
