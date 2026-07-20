@@ -1,6 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/Navbar";
-import { Calendar, ClipboardList, MoveLeft, Plus } from "lucide-react";
+import {
+  Calendar,
+  ClipboardList,
+  Mail,
+  MoveLeft,
+  Phone,
+  Plus,
+  User,
+} from "lucide-react";
 import { Button } from "@base-ui/react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -8,8 +16,46 @@ import { Input } from "../../components/ui/input";
 
 const DRAFT_KEY = "invoice-draft";
 const INVOICES_KEY = "invoices";
+const CUSTOMERS_KEY = "customers";
 
-// ---------- Zod schema ----------
+interface CustomerRecord {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  sameAddress?: boolean;
+  status: "Draft" | "Complete";
+}
+
+function getStoredCustomers(): CustomerRecord[] {
+  const stored = localStorage.getItem(CUSTOMERS_KEY);
+
+  if (!stored) return [];
+
+  try {
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function formatAddress(customer: CustomerRecord): string {
+  return [
+    customer.street,
+    customer.city,
+    customer.state,
+    customer.zip,
+    customer.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
 
 const lineItemSchema = z.object({
   description: z.string().trim().min(1, "Description is required"),
@@ -46,6 +92,26 @@ type InvoiceFormData = z.infer<typeof invoiceSchema>;
 type LineItem = z.infer<typeof lineItemSchema>;
 type FieldErrors = Record<string, string>;
 
+// What actually gets persisted to the `invoices` array. Includes a snapshot
+// of the customer's details at the time the invoice was created, so any
+// invoice list/detail view can show the customer without re-looking them up
+// (and stays correct even if that customer record is later edited or deleted).
+interface StoredInvoice extends InvoiceFormData {
+  invoiceNumber: string;
+  customerSnapshot: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+  } | null;
+  createdAt: string;
+}
+
+function generateInvoiceNumber(): string {
+  return Math.floor(10000000 + Math.random() * 90000000).toString();
+}
+
 const emptyItem = (): LineItem => ({
   description: "",
   qty: 1,
@@ -70,7 +136,7 @@ function CreateInvoice() {
     "idle",
   );
   const [submitted, setSubmitted] = useState(false);
-
+  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
 
   useEffect(() => {
     try {
@@ -83,6 +149,10 @@ function CreateInvoice() {
     } finally {
       setLoadedDraft(true);
     }
+  }, []);
+
+  useEffect(() => {
+    setCustomers(getStoredCustomers());
   }, []);
 
   useEffect(() => {
@@ -100,6 +170,11 @@ function CreateInvoice() {
 
     return () => clearTimeout(handle);
   }, [form, loadedDraft]);
+
+  const selectedCustomer = useMemo(
+    () => customers.find((c) => c.id === form.customer) ?? null,
+    [customers, form.customer],
+  );
 
   const addItem = () => {
     setForm((prev) => ({ ...prev, items: [...prev.items, emptyItem()] }));
@@ -161,13 +236,27 @@ function CreateInvoice() {
 
     setErrors({});
 
+    const customerSnapshot = selectedCustomer
+      ? {
+          id: selectedCustomer.id,
+          fullName: selectedCustomer.fullName,
+          email: selectedCustomer.email,
+          phone: selectedCustomer.phone,
+          address: formatAddress(selectedCustomer),
+        }
+      : null;
+
+    const record: StoredInvoice = {
+      ...result.data,
+      invoiceNumber: generateInvoiceNumber(),
+      customerSnapshot,
+      createdAt: new Date().toISOString(),
+    };
+
     try {
       const raw = localStorage.getItem(INVOICES_KEY);
-      const existing: InvoiceFormData[] = raw ? JSON.parse(raw) : [];
-      localStorage.setItem(
-        INVOICES_KEY,
-        JSON.stringify([...existing, result.data]),
-      );
+      const existing: StoredInvoice[] = raw ? JSON.parse(raw) : [];
+      localStorage.setItem(INVOICES_KEY, JSON.stringify([...existing, record]));
       localStorage.removeItem(DRAFT_KEY);
       navigate("/");
     } catch (err) {
@@ -222,12 +311,43 @@ function CreateInvoice() {
             onChange={(e) => updateField("customer", e.target.value)}
           >
             <option value="">-- Choose a customer --</option>
-            <option>Johnson</option>
-            <option>James</option>
-            <option>David</option>
+            {customers.length === 0 && (
+              <option value="" disabled>
+                No customers found — add one first
+              </option>
+            )}
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.fullName}
+              </option>
+            ))}
           </select>
           {submitted && errors.customer && (
             <p className="text-red-500 text-sm mt-1">{errors.customer}</p>
+          )}
+
+          {/* Preview of the selected customer's details, so it's obvious this
+              is who the invoice will go to before finalizing. */}
+          {selectedCustomer && (
+            <div className="mt-3 border rounded-lg p-4 bg-gray-50 grid sm:grid-cols-3 gap-3 text-sm">
+              <div className="flex items-center gap-2">
+                <User size={16} className="text-gray-500 shrink-0" />
+                <span className="font-medium">{selectedCustomer.fullName}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail size={16} className="text-gray-500 shrink-0" />
+                <span>{selectedCustomer.email}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone size={16} className="text-gray-500 shrink-0" />
+                <span>{selectedCustomer.phone}</span>
+              </div>
+              {formatAddress(selectedCustomer) && (
+                <div className="sm:col-span-3 text-gray-600">
+                  {formatAddress(selectedCustomer)}
+                </div>
+              )}
+            </div>
           )}
         </div>
 

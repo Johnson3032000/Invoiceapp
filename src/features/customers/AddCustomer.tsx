@@ -3,9 +3,6 @@ import Navbar from "../../components/Navbar";
 import { ArrowLeft, ArrowRight, Mail, Phone, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// All customers live in one array under this key so the list/review
-// pages can render them with .map(). Each record carries a unique id
-// so later wizard steps (address, review) know which entry to update.
 const CUSTOMERS_KEY = "customers";
 const CURRENT_CUSTOMER_KEY = "currentCustomerId";
 
@@ -31,8 +28,7 @@ function getStoredCustomers(): CustomerRecord[] {
   try {
     const parsed = JSON.parse(stored);
     return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error("Failed to parse stored customers:", error);
+  } catch {
     return [];
   }
 }
@@ -47,40 +43,39 @@ function AddCustomer() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
-
+    }));
   };
 
   const handleContinue = () => {
     if (
-      formData.fullName.trim() === "" ||
-      formData.email.trim() === "" ||
-      formData.phone.trim() === ""
+      !formData.fullName.trim() ||
+      !formData.email.trim() ||
+      !formData.phone.trim()
     ) {
-      alert("Please fill all the fields.");
+      alert("Please fill all fields.");
       return;
     }
 
-    const customers = getStoredCustomers();
+    let customers = getStoredCustomers();
 
-    // If the person navigated back to step 1 while editing a draft
-    // they already started, update that same record instead of
-    // creating a duplicate entry.
-    const currentId = localStorage.getItem(CURRENT_CUSTOMER_KEY);
-    const existingIndex = currentId
-      ? customers.findIndex((c) => c.id === currentId)
+    const currentCustomerId = localStorage.getItem(CURRENT_CUSTOMER_KEY);
+
+    const existingIndex = currentCustomerId
+      ? customers.findIndex((customer) => customer.id === currentCustomerId)
       : -1;
 
-    if (existingIndex !== -1) {
+
+    const isResumingDraft =
+      existingIndex !== -1 && customers[existingIndex].status === "Draft";
+
+    if (isResumingDraft) {
       customers[existingIndex] = {
         ...customers[existingIndex],
         ...formData,
       };
-
-      localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
     } else {
       const newCustomer: CustomerRecord = {
         id:
@@ -92,10 +87,12 @@ function AddCustomer() {
       };
 
       customers.push(newCustomer);
-
-      localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
       localStorage.setItem(CURRENT_CUSTOMER_KEY, newCustomer.id);
     }
+
+    localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
+
+    console.log("Customers:", customers);
 
     navigate("/customer/form2");
   };
@@ -112,7 +109,7 @@ function AddCustomer() {
 
         <div className="flex w-[600px] justify-between">
           <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-900 text-white rounded-xl flex items-center justify-center font-medium text-sm">
+            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-900 text-white rounded-xl flex items-center justify-center">
               1
             </div>
 
@@ -123,7 +120,7 @@ function AddCustomer() {
           </div>
 
           <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 text-black rounded-xl flex items-center justify-center font-medium text-sm">
+            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 rounded-xl flex items-center justify-center">
               2
             </div>
 
@@ -134,7 +131,7 @@ function AddCustomer() {
           </div>
 
           <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 text-black rounded-xl flex items-center justify-center font-medium text-sm">
+            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 rounded-xl flex items-center justify-center">
               3
             </div>
 
@@ -146,8 +143,8 @@ function AddCustomer() {
         </div>
       </div>
 
-      <div className=" bg-gray-100 flex items-center justify-center p-8">
-        <div className="w-full max-w-4xl bg-white rounded-3xl border border-gray-200 shadow-sm p-10">
+      <div className="bg-gray-100 flex items-center justify-center p-8">
+        <div className="w-full max-w-4xl bg-white rounded-3xl border shadow-sm p-10">
           <div className="flex items-center gap-2 mb-6">
             <User size={20} />
             <h2 className="text-xl font-semibold">Personal Information</h2>
@@ -155,7 +152,6 @@ function AddCustomer() {
 
           <hr className="mb-8" />
 
-          {/* Full Name */}
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">
               Full Name <span className="text-red-500">*</span>
@@ -226,7 +222,7 @@ function AddCustomer() {
 
             <button
               onClick={handleContinue}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl flex items-center gap-2 font-medium"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl flex items-center gap-2"
             >
               Continue
               <ArrowRight size={18} />

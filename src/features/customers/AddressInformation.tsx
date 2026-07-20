@@ -20,10 +20,17 @@ interface AddressData {
   sameAddress: boolean;
 }
 
-// Shared draft used across the multi-step "New Customer" wizard.
-// Each step reads/writes its own slice (e.g. draft.personal, draft.address)
-// so nothing gets wiped out when moving between steps.
-const DRAFT_KEY = "newCustomerDraft";
+interface CustomerRecord {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address?: AddressData[];
+  status: "Draft" | "Complete";
+}
+
+const CUSTOMERS_KEY = "customers";
+const CURRENT_CUSTOMER_KEY = "currentCustomerId";
 
 const defaultAddress: AddressData = {
   street: "",
@@ -34,41 +41,51 @@ const defaultAddress: AddressData = {
   sameAddress: true,
 };
 
+function getStoredCustomers(): CustomerRecord[] {
+  const stored = localStorage.getItem(CUSTOMERS_KEY);
+
+  if (!stored) return [];
+
+  try {
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error("Failed to parse stored customers:", error);
+    return [];
+  }
+}
+
 function AddressInformation() {
   const [address, setAddress] = useState<AddressData>(defaultAddress);
   const navigate = useNavigate();
 
-  // Load any previously saved address info for this draft on mount
   useEffect(() => {
-    const storedDraft = localStorage.getItem(DRAFT_KEY);
+    const currentCustomerId = localStorage.getItem(CURRENT_CUSTOMER_KEY);
+    if (!currentCustomerId) return;
 
-    if (storedDraft) {
-      try {
-        const parsedDraft = JSON.parse(storedDraft);
+    const customers = getStoredCustomers();
+    const current = customers.find((c) => c.id === currentCustomerId);
 
-        if (parsedDraft.address) {
-          setAddress({ ...defaultAddress, ...parsedDraft.address });
-        }
-      } catch (error) {
-        console.error("Failed to parse saved customer draft:", error);
-      }
+    if (current?.address && current.address[0]) {
+      setAddress({ ...defaultAddress, ...current.address[0] });
     }
   }, []);
 
   const saveAddress = (updatedAddress: AddressData) => {
-    const storedDraft = localStorage.getItem(DRAFT_KEY);
-    let draft: Record<string, unknown> = {};
+    const currentCustomerId = localStorage.getItem(CURRENT_CUSTOMER_KEY);
+    if (!currentCustomerId) return;
 
-    if (storedDraft) {
-      try {
-        draft = JSON.parse(storedDraft);
-      } catch (error) {
-        console.error("Failed to parse saved customer draft:", error);
-      }
-    }
+    const customers = getStoredCustomers();
+    const index = customers.findIndex((c) => c.id === currentCustomerId);
 
-    const updatedDraft = { ...draft, address: updatedAddress };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(updatedDraft));
+    if (index === -1) return;
+
+    customers[index] = {
+      ...customers[index],
+      address: [updatedAddress],
+    };
+
+    localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(customers));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
