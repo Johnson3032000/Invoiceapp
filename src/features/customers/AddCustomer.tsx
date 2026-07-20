@@ -67,7 +67,6 @@ function AddCustomer() {
       ? customers.findIndex((customer) => customer.id === currentCustomerId)
       : -1;
 
-
     const isResumingDraft =
       existingIndex !== -1 && customers[existingIndex].status === "Draft";
 
@@ -97,54 +96,44 @@ function AddCustomer() {
     navigate("/customer/form2");
   };
 
+  const steps = [
+    { number: 1, label: "STEP 1", title: "Personal", active: true },
+    { number: 2, label: "STEP 2", title: "Address", active: false },
+    { number: 3, label: "STEP 3", title: "Review", active: false },
+  ];
+
   return (
     <div>
       <Navbar />
 
-      <div className="flex px-[200px] mt-[50px] justify-around my-[30px]">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-around px-4 sm:px-8 lg:px-[100px] xl:px-[200px] mt-8 mb-6">
         <div>
-          <h1 className="font-bold text-3xl">New Customer</h1>
+          <h1 className="font-bold text-2xl sm:text-3xl">New Customer</h1>
           <p>Register a new client to start billing them.</p>
         </div>
 
-        <div className="flex w-[600px] justify-between">
-          <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-900 text-white rounded-xl flex items-center justify-center">
-              1
-            </div>
+        <div className="flex w-full lg:w-[600px] justify-between overflow-x-auto">
+          {steps.map((step) => (
+            <div key={step.number} className="flex shrink-0">
+              <div
+                className={`w-10 h-10 mx-2 sm:mx-[10px] mt-[12px] rounded-xl flex items-center justify-center text-white ${
+                  step.active ? "bg-slate-900" : "bg-slate-300"
+                }`}
+              >
+                {step.number}
+              </div>
 
-            <div className="mt-[10px]">
-              <p>STEP 1</p>
-              <p>Personal</p>
+              <div className="mt-[10px]">
+                <p className="text-xs sm:text-sm">{step.label}</p>
+                <p className="text-sm sm:text-base">{step.title}</p>
+              </div>
             </div>
-          </div>
-
-          <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 rounded-xl flex items-center justify-center">
-              2
-            </div>
-
-            <div className="mt-[10px]">
-              <p>STEP 2</p>
-              <p>Address</p>
-            </div>
-          </div>
-
-          <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 rounded-xl flex items-center justify-center">
-              3
-            </div>
-
-            <div className="mt-[10px]">
-              <p>STEP 3</p>
-              <p>Review</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="bg-gray-100 flex items-center justify-center p-8">
-        <div className="w-full max-w-4xl bg-white rounded-3xl border shadow-sm p-10">
+      <div className="bg-gray-100 flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <div className="w-full max-w-4xl bg-white rounded-3xl border shadow-sm p-5 sm:p-8 md:p-10">
           <div className="flex items-center gap-2 mb-6">
             <User size={20} />
             <h2 className="text-xl font-semibold">Personal Information</h2>
@@ -158,7 +147,7 @@ function AddCustomer() {
             </label>
 
             <div className="flex items-center border rounded-xl px-4 h-12">
-              <User size={18} className="text-gray-400" />
+              <User size={18} className="text-gray-400 shrink-0" />
 
               <input
                 type="text"
@@ -166,7 +155,7 @@ function AddCustomer() {
                 placeholder="Jane Doe"
                 value={formData.fullName}
                 onChange={handleChange}
-                className="w-full outline-none px-3 text-sm"
+                className="w-full min-w-0 outline-none px-3 text-sm"
               />
             </div>
           </div>
@@ -177,7 +166,7 @@ function AddCustomer() {
             </label>
 
             <div className="flex items-center border rounded-xl px-4 h-12">
-              <Mail size={18} className="text-gray-400" />
+              <Mail size={18} className="text-gray-400 shrink-0" />
 
               <input
                 type="email"
@@ -185,7 +174,7 @@ function AddCustomer() {
                 placeholder="jane@example.com"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full outline-none px-3 text-sm"
+                className="w-full min-w-0 outline-none px-3 text-sm"
               />
             </div>
           </div>
@@ -196,7 +185,7 @@ function AddCustomer() {
             </label>
 
             <div className="flex items-center border rounded-xl px-4 h-12">
-              <Phone size={18} className="text-gray-400" />
+              <Phone size={18} className="text-gray-400 shrink-0" />
 
               <input
                 type="tel"
@@ -204,17 +193,17 @@ function AddCustomer() {
                 placeholder="+1 555 0100"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full outline-none px-3 text-sm"
+                className="w-full min-w-0 outline-none px-3 text-sm"
               />
             </div>
           </div>
 
           <hr className="mb-8" />
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <button
               onClick={() => navigate("/customer")}
-              className="flex items-center gap-2 text-gray-600 hover:text-black"
+              className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 hover:text-black"
             >
               <ArrowLeft size={18} />
               Cancel
@@ -222,7 +211,7 @@ function AddCustomer() {
 
             <button
               onClick={handleContinue}
-              className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl flex items-center gap-2"
+              className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl flex items-center justify-center gap-2"
             >
               Continue
               <ArrowRight size={18} />

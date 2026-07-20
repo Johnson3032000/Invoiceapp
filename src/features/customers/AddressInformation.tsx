@@ -110,55 +110,61 @@ function AddressInformation() {
     navigate("/customer");
   };
 
+  const steps = [
+    { number: 1, label: "STEP 1", title: "Personal", state: "done" as const },
+    {
+      number: 2,
+      label: "STEP 2",
+      title: "Address",
+      state: "active" as const,
+    },
+    {
+      number: 3,
+      label: "STEP 3",
+      title: "Review",
+      state: "upcoming" as const,
+    },
+  ];
+
+  const stepBadgeClass = (state: "done" | "active" | "upcoming") => {
+    if (state === "done") return "bg-slate-900 text-white";
+    if (state === "active") return "bg-black text-white";
+    return "bg-slate-300 text-black";
+  };
+
   return (
     <div>
       <Navbar />
 
-      <div className="flex px-[200px] mt-[50px] justify-around my-[30px]">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-around px-4 sm:px-8 lg:px-[100px] xl:px-[200px] mt-8 mb-6">
         <div>
-          <h1 className="font-bold text-3xl">New Customer</h1>
+          <h1 className="font-bold text-2xl sm:text-3xl">New Customer</h1>
           <p>Register a new client to start billing them.</p>
         </div>
 
-        <div className="flex w-[600px] justify-between">
-          <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-900 text-white rounded-xl flex items-center justify-center font-medium text-sm">
-              <Check />
-            </div>
+        <div className="flex w-full lg:w-[600px] justify-between overflow-x-auto">
+          {steps.map((step) => (
+            <div key={step.number} className="flex shrink-0">
+              <div
+                className={`w-10 h-10 mx-2 sm:mx-[10px] mt-[12px] rounded-xl flex items-center justify-center font-medium text-sm ${stepBadgeClass(
+                  step.state,
+                )}`}
+              >
+                {step.state === "done" ? <Check /> : step.number}
+              </div>
 
-            <div className="mt-[10px]">
-              <p>STEP 1</p>
-              <p>Personal</p>
+              <div className="mt-[10px]">
+                <p className="text-xs sm:text-sm">{step.label}</p>
+                <p className="text-sm sm:text-base">{step.title}</p>
+              </div>
             </div>
-          </div>
-
-          <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-[black] text-white rounded-xl flex items-center justify-center font-medium text-sm">
-              2
-            </div>
-
-            <div className="mt-[10px]">
-              <p>STEP 2</p>
-              <p>Address</p>
-            </div>
-          </div>
-
-          <div className="flex">
-            <div className="w-10 h-10 mx-[10px] mt-[12px] bg-slate-300 text-black rounded-xl flex items-center justify-center font-medium text-sm">
-              3
-            </div>
-
-            <div className="mt-[10px]">
-              <p>STEP 3</p>
-              <p>Review</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className=" bg-gray-100 flex justify-center items-center p-8">
-        <div className="bg-white w-full max-w-5xl rounded-3xl shadow-lg border border-gray-200 p-8">
-          {/* Heading */}
+      <div className="bg-gray-100 flex justify-center items-center p-4 sm:p-6 md:p-8">
+        <div className="bg-white w-full max-w-5xl rounded-3xl shadow-lg border border-gray-200 p-5 sm:p-6 md:p-8">
+     
           <div className="flex items-center gap-2 mb-6">
             <MapPin className="w-5 h-5 text-gray-700" />
             <h2 className="font-bold text-lg">Address Information</h2>
@@ -195,7 +201,7 @@ function AddressInformation() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-2">
                 City <span className="text-red-500">*</span>
@@ -278,7 +284,7 @@ function AddressInformation() {
                 name="sameAddress"
                 checked={address.sameAddress}
                 onChange={handleChange}
-                className="w-5 h-5 accent-blue-600"
+                className="w-5 h-5 accent-blue-600 shrink-0"
               />
 
               <span className="font-medium text-sm">
@@ -289,10 +295,10 @@ function AddressInformation() {
 
           <hr className="my-10" />
 
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <button
               onClick={handleBack}
-              className="flex items-center gap-2 text-gray-600 hover:text-black"
+              className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 hover:text-black"
             >
               <ArrowLeft size={18} />
               Back
@@ -300,7 +306,7 @@ function AddressInformation() {
 
             <button
               onClick={handleContinue}
-              className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800"
+              className="flex items-center justify-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl hover:bg-slate-800"
             >
               Continue
               <ArrowRight size={18} />
