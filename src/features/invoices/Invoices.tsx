@@ -36,7 +36,7 @@ interface CustomerSnapshot {
 }
 
 interface Invoice {
-  customer: string; 
+  customer: string;
   customerSnapshot?: CustomerSnapshot | null;
   invoiceNumber?: string;
   invoiceDate: string;
@@ -56,32 +56,27 @@ function Invoices() {
   const [search, setSearch] = useState("");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-
-
   const showReceipt = selectedIndex !== null;
   const selectedInvoice =
     selectedIndex !== null ? invoices[selectedIndex] : null;
 
+  useEffect(() => {
+    const storedInvoices = localStorage.getItem("invoices");
 
-      useEffect(() => {
-        const storedInvoices = localStorage.getItem("invoices");
+    if (storedInvoices) {
+      const parsedInvoices = JSON.parse(storedInvoices).map((invoice: any) => ({
+        ...invoice,
+        status: (invoice.status === "Pending" ? "Pending" : "Paid") as
+          | "Paid"
+          | "Pending",
+        invoiceNumber: invoice.invoiceNumber || generateInvoiceNumber(),
+      })) as Invoice[];
 
-        if (storedInvoices) {
-          const parsedInvoices = JSON.parse(storedInvoices).map(
-            (invoice: any) => ({
-              ...invoice,
-              status: (invoice.status === "Pending" ? "Pending" : "Paid") as
-                | "Paid"
-                | "Pending",
-              invoiceNumber: invoice.invoiceNumber || generateInvoiceNumber(),
-            }),
-          ) as Invoice[];
+      setInvoices(parsedInvoices);
 
-          setInvoices(parsedInvoices);
-
-          localStorage.setItem("invoices", JSON.stringify(parsedInvoices));
-        }
-      }, []);
+      localStorage.setItem("invoices", JSON.stringify(parsedInvoices));
+    }
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = showReceipt ? "hidden" : "";
@@ -106,7 +101,6 @@ function Invoices() {
     setInvoices(updatedInvoices);
     localStorage.setItem("invoices", JSON.stringify(updatedInvoices));
   };
-
 
   const getCustomerName = (invoice: Invoice) =>
     invoice.customerSnapshot?.fullName || invoice.customer;
@@ -143,7 +137,7 @@ function Invoices() {
 
   const filteredInvoices = invoices
     .map((invoice, originalIndex) => ({ invoice, originalIndex }))
-    .filter(({ invoice, originalIndex }) => {
+    .filter(({ invoice }) => {
       if (!search.trim()) return true;
       const term = search.toLowerCase();
       return (
