@@ -188,7 +188,7 @@ function Invoices() {
         </div>
         <div>
           <Button
-            className="flex items-center justify-center w-full sm:w-auto bg-[red] text-white px-4 py-3 sm:p-[20px] rounded-2xl"
+            className="flex items-center justify-center w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-[black] text-black w-full sm:w-auto hover:bg-black hover:text-white transition"
             onClick={() => navigate("/Invoice")}
           >
             <Plus />

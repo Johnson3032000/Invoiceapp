@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import Navbar from "../../components/Navbar";
 import { ArrowLeft, ArrowRight, Mail, Phone, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 const CUSTOMERS_KEY = "customers";
 const CURRENT_CUSTOMER_KEY = "currentCustomerId";
@@ -20,6 +23,26 @@ interface CustomerRecord {
   status: "Draft" | "Complete";
 }
 
+const customerFormSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Full name is required.")
+    .min(2, "Full name must be at least 2 characters."),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email is required.")
+    .email("Enter a valid email address."),
+  phone: z
+    .string()
+    .trim()
+    .min(1, "Phone number is required.")
+    .regex(/^\+?[0-9\s\-().]{7,20}$/, "Enter a valid phone number."),
+});
+
+type CustomerFormData = z.infer<typeof customerFormSchema>;
+
 function getStoredCustomers(): CustomerRecord[] {
   const stored = localStorage.getItem(CUSTOMERS_KEY);
 
@@ -36,29 +59,22 @@ function getStoredCustomers(): CustomerRecord[] {
 function AddCustomer() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
+  const {
+    register,
+    handleSubmit,
+    trigger,
+    formState: { errors },
+  } = useForm<CustomerFormData>({
+    resolver: zodResolver(customerFormSchema as any),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+    },
+
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleContinue = () => {
-    if (
-      !formData.fullName.trim() ||
-      !formData.email.trim() ||
-      !formData.phone.trim()
-    ) {
-      alert("Please fill all fields.");
-      return;
-    }
-
+  const onSubmit = (data: CustomerFormData) => {
     let customers = getStoredCustomers();
 
     const currentCustomerId = localStorage.getItem(CURRENT_CUSTOMER_KEY);
@@ -73,7 +89,7 @@ function AddCustomer() {
     if (isResumingDraft) {
       customers[existingIndex] = {
         ...customers[existingIndex],
-        ...formData,
+        ...data,
       };
     } else {
       const newCustomer: CustomerRecord = {
@@ -81,7 +97,7 @@ function AddCustomer() {
           typeof crypto !== "undefined" && crypto.randomUUID
             ? crypto.randomUUID()
             : Date.now().toString(),
-        ...formData,
+        ...data,
         status: "Draft",
       };
 
@@ -133,7 +149,11 @@ function AddCustomer() {
       </div>
 
       <div className="bg-gray-100 flex items-center justify-center p-4 sm:p-6 md:p-8">
-        <div className="w-full max-w-4xl bg-white rounded-3xl border shadow-sm p-5 sm:p-8 md:p-10">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="w-full max-w-4xl bg-white rounded-3xl border shadow-sm p-5 sm:p-8 md:p-10"
+          noValidate
+        >
           <div className="flex items-center gap-2 mb-6">
             <User size={20} />
             <h2 className="text-xl font-semibold">Personal Information</h2>
@@ -146,18 +166,27 @@ function AddCustomer() {
               Full Name <span className="text-red-500">*</span>
             </label>
 
-            <div className="flex items-center border rounded-xl px-4 h-12">
+            <div
+              className={`flex items-center border rounded-xl px-4 h-12 ${
+                errors.fullName ? "border-red-500" : ""
+              }`}
+            >
               <User size={18} className="text-gray-400 shrink-0" />
 
               <input
                 type="text"
-                name="fullName"
                 placeholder="Jane Doe"
-                value={formData.fullName}
-                onChange={handleChange}
+                {...register("fullName", {
+                  onBlur: () => trigger("fullName"),
+                })}
                 className="w-full min-w-0 outline-none px-3 text-sm"
               />
             </div>
+            {errors.fullName && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.fullName.message}
+              </p>
+            )}
           </div>
 
           <div className="mb-6">
@@ -165,18 +194,27 @@ function AddCustomer() {
               Email Address <span className="text-red-500">*</span>
             </label>
 
-            <div className="flex items-center border rounded-xl px-4 h-12">
+            <div
+              className={`flex items-center border rounded-xl px-4 h-12 ${
+                errors.email ? "border-red-500" : ""
+              }`}
+            >
               <Mail size={18} className="text-gray-400 shrink-0" />
 
               <input
                 type="email"
-                name="email"
                 placeholder="jane@example.com"
-                value={formData.email}
-                onChange={handleChange}
+                {...register("email", {
+                  onBlur: () => trigger("email"),
+                })}
                 className="w-full min-w-0 outline-none px-3 text-sm"
               />
             </div>
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.email.message}
+              </p>
+            )}
           </div>
 
           <div className="mb-10">
@@ -184,24 +222,34 @@ function AddCustomer() {
               Phone Number <span className="text-red-500">*</span>
             </label>
 
-            <div className="flex items-center border rounded-xl px-4 h-12">
+            <div
+              className={`flex items-center border rounded-xl px-4 h-12 ${
+                errors.phone ? "border-red-500" : ""
+              }`}
+            >
               <Phone size={18} className="text-gray-400 shrink-0" />
 
               <input
                 type="tel"
-                name="phone"
                 placeholder="+1 555 0100"
-                value={formData.phone}
-                onChange={handleChange}
+                {...register("phone", {
+                  onBlur: () => trigger("phone"),
+                })}
                 className="w-full min-w-0 outline-none px-3 text-sm"
               />
             </div>
+            {errors.phone && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.phone.message}
+              </p>
+            )}
           </div>
 
           <hr className="mb-8" />
 
           <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <button
+              type="button"
               onClick={() => navigate("/customer")}
               className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 hover:text-black"
             >
@@ -210,14 +258,14 @@ function AddCustomer() {
             </button>
 
             <button
-              onClick={handleContinue}
+              type="submit"
               className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl flex items-center justify-center gap-2"
             >
               Continue
               <ArrowRight size={18} />
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

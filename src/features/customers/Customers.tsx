@@ -83,15 +83,14 @@ function Customers() {
         </div>
 
         <Button
-          className="flex items-center justify-center bg-blue-600 text-white px-4 py-3 sm:p-5 rounded-2xl w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 px-6 py-3 rounded-full border-2 border-[black] text-black w-full sm:w-auto hover:bg-black hover:text-white transition px-4 py-3 sm:p-5 rounded-2xl w-full sm:w-auto"
           onClick={() => {
-   
             localStorage.removeItem("currentCustomerId");
             navigate("/customer/form1");
           }}
         >
           <Plus />
-          <span className="px-2">Add Customer</span>
+          <span className="px-2 ">Add Customer</span>
         </Button>
       </div>
 
@@ -150,7 +149,7 @@ function Customers() {
                       <TableCell>
                         <Button
                           onClick={() => navigate("/")}
-                          className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                          className="gap-2 px-6 py-2 rounded-full border-2 border-[black] text-black w-full sm:w-auto hover:bg-black hover:text-white transition"
                         >
                           View
                         </Button>
