@@ -1,4 +1,4 @@
-import React from "react";
+
 import Navbar from "../../components/Navbar";
 import { ArrowLeft, ArrowRight, Mail, Phone, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
